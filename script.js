@@ -18,6 +18,7 @@ const pageData = {
             </div>
             <div id="formatList" class="format-list"></div>
           </aside>
+          <div id="mp-team-panel" class="mp-team-panel"></div>
         </div>`
   },
   music: {
@@ -113,6 +114,15 @@ function saveToCache() {
   } catch (e) {}
 }
 
+/**
+ * 联机模式：房主将当前完整状态广播到房间
+ */
+function emitStateToRoom() {
+  if (typeof window.emitCurrentState === 'function') {
+    window.emitCurrentState();
+  }
+}
+
 function loadFromCache() {
   try {
     const fmt = localStorage.getItem(CACHE_KEY_FORMAT);
@@ -192,6 +202,7 @@ function clearCache() {
   initAllSongDiffsOnCache();
   renderFormatList();
   applyCellDataToBoard();
+  emitStateToRoom();
 }
 loadFromCache();
 
@@ -360,7 +371,7 @@ navItems.forEach(item => {
     const page = item.dataset.page;
     if (pageData[page]) {
       pageContent.innerHTML = pageData[page].content;
-      if (page === 'game') { applyCellDataToBoard(); renderFormatList(); }
+      if (page === 'game') { applyCellDataToBoard(); renderFormatList(); if (typeof window.setBoardButtonsEnabled === 'function') { window.setBoardButtonsEnabled(window.isMultiplayerHost || !window.mpRoomCode); } if (typeof renderTeamPanel === 'function') { renderTeamPanel(); } }
       if (page === 'music') { musicPage = 0; doRenderMusicList(''); }
     }
   });
@@ -576,7 +587,7 @@ navItems.forEach(item => {
       if (currentPage === 'multiplayer' && typeof window.destroyMultiplayerPage === 'function') { window.destroyMultiplayerPage(); }
       pageContent.innerHTML = pageData[page].content;
       currentPage = page;
-      if (page === 'game') { applyCellDataToBoard(); renderFormatList(); }
+      if (page === 'game') { applyCellDataToBoard(); renderFormatList(); if (typeof window.setBoardButtonsEnabled === 'function') { window.setBoardButtonsEnabled(window.isMultiplayerHost || !window.mpRoomCode); } if (typeof renderTeamPanel === 'function') { renderTeamPanel(); } }
       if (page === 'settings') {
         const sel = document.getElementById('librarySelect');
         if (sel) sel.value = currentLibrary;
@@ -701,6 +712,7 @@ lockCellBtn.addEventListener('click', () => {
   cellLocked[selectedCellIndex] = !cellLocked[selectedCellIndex];
   applyCellDataToBoard();
   saveToCache();
+  emitStateToRoom();
   cellActionModal.classList.remove('show');
 });
 
@@ -747,6 +759,7 @@ rerollCellBtn.addEventListener('click', () => {
   };
   applyCellDataToBoard();
   saveToCache();
+  emitStateToRoom();
   cellActionModal.classList.remove('show');
 });
 
@@ -793,6 +806,7 @@ document.addEventListener('click', (e) => {
       renderFormatList();
       applyCellDataToBoard();
       saveToCache();
+      emitStateToRoom();
     }
     return;
   }
@@ -810,12 +824,14 @@ document.addEventListener('click', (e) => {
     }
     applyCellDataToBoard();
     saveToCache();
+    emitStateToRoom();
     return;
   }
 
   // 生成地图按钮
   if (e.target.classList.contains('btn-gen-map') || e.target.id === 'genMapBtn') {
     generateMap();
+    emitStateToRoom();
     return;
   }
 
@@ -826,6 +842,7 @@ document.addEventListener('click', (e) => {
     cellLocked = new Array(25).fill(false);
     applyCellDataToBoard();
     saveToCache();
+    emitStateToRoom();
     return;
   }
 
@@ -932,6 +949,7 @@ document.addEventListener('click', (e) => {
       cellLocked[selectedCellIndex] = false; // 清除锁定
       applyCellDataToBoard();
       saveToCache();
+      emitStateToRoom();
     }
     closeCellModal();
     return;
@@ -1031,6 +1049,7 @@ saveFormat.addEventListener('click', () => {
   renderFormatList();
   applyCellDataToBoard();
   saveToCache();
+  emitStateToRoom();
   closeFormatEditModal();
 });
 

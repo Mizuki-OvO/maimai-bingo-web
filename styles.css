@@ -1253,6 +1253,121 @@ body {
   margin-top: 8px;
 }
 
+/* ========== 队伍选择器 ========== */
+.mp-team-selector,
+.mp-team-switch {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.mp-team-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 18px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #f8fafc;
+  min-width: 80px;
+}
+
+.mp-team-option:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: var(--team-color, #ccc);
+}
+
+.mp-team-option.selected {
+  border-color: var(--team-color, #2980b9);
+  background: color-mix(in srgb, var(--team-color, #2980b9) 10%, #fff);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.mp-team-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
+
+.mp-team-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #444;
+  white-space: nowrap;
+}
+
+/* 队伍颜色圆点 (玩家列表) */
+.mp-team-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+/* 我的队伍徽章 */
+.mp-my-team-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  margin-right: 8px;
+}
+
+/* 颜色自定义 */
+.mp-color-customize {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.mp-color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8fafc;
+  padding: 8px 16px;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 280px;
+}
+
+.mp-color-label {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.mp-color-picker {
+  width: 36px;
+  height: 36px;
+  border: 2px solid rgba(0,0,0,0.15);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 2px;
+  background: transparent;
+}
+
+.mp-color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.mp-color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 5px;
+}
+
 .bulk-check input[type="checkbox"] {
   width: 14px;
   height: 14px;
@@ -1632,3 +1747,232 @@ body {
   color: #27ae60;
   border: 1px solid #a3e9b2;
 }
+
+/* ========== 联机模式按钮禁用 ========== */
+.btn-random-fill:disabled,
+.btn-clear-board:disabled,
+.btn-gen-map:disabled,
+#randomFillBtn:disabled,
+#clearBoardBtn:disabled,
+#genMapBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ========== 队伍面板 ========== */
+.mp-team-panel {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  gap: 12px;
+  z-index: 100;
+  pointer-events: none;
+}
+.mp-team-panel:empty {
+  display: none;
+}
+.mp-team-card {
+  background: #1e2030;
+  border: 2px solid var(--team-color, #555);
+  border-radius: 12px;
+  width: 180px;
+  overflow: hidden;
+  pointer-events: auto;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.mp-team-card-header {
+  background: var(--team-color, #555);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+.mp-team-card-header .mp-team-count {
+  font-size: 11px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 10px;
+  padding: 1px 8px;
+}
+.mp-team-card-body {
+  padding: 6px 8px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+.mp-team-card-player {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #ccc;
+  cursor: default;
+}
+.mp-team-card-player:hover {
+  background: rgba(255,255,255,0.06);
+}
+.mp-team-card-player .mp-player-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.mp-team-card-player .mp-player-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mp-team-card-badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.mp-team-card-captain-badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: rgba(255,215,0,0.2);
+  color: #ffd700;
+}
+.mp-team-card-me-badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: rgba(100,149,237,0.2);
+  color: #6495ed;
+}
+.mp-team-card-avatar {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.mp-team-card-pname {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: #ccc;
+}
+.mp-team-card-empty {
+  font-size: 11px;
+  color: #666;
+  text-align: center;
+  padding: 8px 0;
+}
+.mp-team-popup-header {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.mp-team-popup-subtitle {
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 20px;
+}
+
+/* ========== 右键菜单 ========== */
+.mp-context-menu {
+  position: fixed;
+  z-index: 10000;
+  background: #252836;
+  border: 1px solid #444;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  min-width: 160px;
+  padding: 4px 0;
+  overflow: hidden;
+}
+.mp-context-item {
+  padding: 8px 14px;
+  font-size: 13px;
+  color: #ddd;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s;
+}
+.mp-context-item:hover {
+  background: #3a3d50;
+  color: #fff;
+}
+
+/* ========== 队伍选择弹窗 ========== */
+.mp-team-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  animation: mpFadeIn 0.2s ease;
+}
+@keyframes mpFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.mp-team-popup {
+  background: #1e2030;
+  border: 1px solid #3a3d50;
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.5);
+  animation: mpPopIn 0.25s ease;
+}
+@keyframes mpPopIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.mp-team-popup h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #fff;
+}
+.mp-team-popup p {
+  margin: 0 0 20px 0;
+  font-size: 13px;
+  color: #999;
+}
+.mp-team-popup-options {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.mp-team-popup-option {
+  background: #252836;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 18px 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 120px;
+}
+.mp-team-popup-option:hover {
+  border-color: var(--team-color, #888);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.mp-team-popup-option .mp-team-popup-swatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  margin: 0 auto 8px;
+}
+.mp-team-popup-option .mp-team-popup-label {
+  font-size: 14px;
+  color: #ddd;
+  font-weight: 600;
+}
+

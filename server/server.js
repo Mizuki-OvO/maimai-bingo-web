@@ -9,8 +9,11 @@ const io = new Server(server, {
   cors: { origin: '*', methods: ['GET', 'POST'] }
 });
 
-// 房间存储: roomCode -> { hostId, players: Map<socketId, {name, isHost}>, createdAt }
+// 房间存储: roomCode -> { hostId, players: Map<socketId, {name, isHost, team}>, teamColors, teamCaptains, createdAt }
 const rooms = new Map();
+
+// 默认队伍颜色
+const DEFAULT_TEAM_COLORS = ['#e74c3c', '#3498db', '#27ae60'];
 
 // 生成6位房间码
 function generateRoomCode() {
@@ -36,17 +39,23 @@ io.on('connection', (socket) => {
   socket.on('create-room', (data, callback) => {
     const roomCode = generateRoomCode();
     const playerName = data?.playerName || 'Host';
+    const creatorTeam = typeof data?.team === 'number' && data.team >= 0 && data.team <= 2 ? data.team : 0;
+    const teamCaptains = { 0: null, 1: null, 2: null };
+    teamCaptains[creatorTeam] = socket.id;
     rooms.set(roomCode, {
       hostId: socket.id,
-      players: new Map([[socket.id, { name: playerName, isHost: true }]]),
+      players: new Map([[socket.id, { name: playerName, isHost: true, team: creatorTeam }]]),
+      teamColors: [...DEFAULT_TEAM_COLORS],
+      teamCaptains,
       createdAt: Date.now(),
       state: null
     });
     socket.join(roomCode);
     socket.data.roomCode = roomCode;
     socket.data.playerName = playerName;
-    socket.emit('room-created', { code: roomCode, players: getPlayerList(roomCode) });
-    if (typeof callback === 'function') callback({ success: true, roomCode, players: getPlayerList(roomCode) });
+    const room = rooms.get(roomCode);
+    socket.emit('room-created', { code: roomCode, players: getPlayerList(roomCode), teamColors: room.teamColors, teamCaptains: room.teamCaptains });
+    if (typeof callback === 'function') callback({ success: true, roomCode, players: getPlayerList(roomCode), teamColors: room.teamColors, teamCaptains: room.teamCaptains });
     console.log(`Room ${roomCode} created by ${playerName}`);
   });
 
@@ -64,13 +73,19 @@ io.on('connection', (socket) => {
       if (typeof callback === 'function') callback({ success: false, error: '你已经在该房间中' });
       return;
     }
-    room.players.set(socket.id, { name: playerName || 'Player', isHost: false });
+    const playerTeam = typeof data.team === 'number' && data.team >= 0 && data.team <= 2 ? data.team : 0;
+    room.players.set(socket.id, { name: playerName || 'Player', isHost: false, team: playerTeam });
+    // 如果该队伍没有队长，第一个加入的自动成为队长
+    if (!room.teamCaptains) room.teamCaptains = { 0: null, 1: null, 2: null };
+    if (!room.teamCaptains[playerTeam]) {
+      room.teamCaptains[playerTeam] = socket.id;
+    }
     socket.join(roomCode);
     socket.data.roomCode = roomCode;
     socket.data.playerName = playerName;
-    socket.emit('room-joined', { code: roomCode, players: getPlayerList(roomCode), state: room.state });
-    if (typeof callback === 'function') callback({ success: true, players: getPlayerList(roomCode), state: room.state });
-    socket.to(roomCode).emit('player-joined', { players: getPlayerList(roomCode) });
+    socket.emit('room-joined', { code: roomCode, players: getPlayerList(roomCode), state: room.state, teamColors: room.teamColors, teamCaptains: room.teamCaptains });
+    if (typeof callback === 'function') callback({ success: true, players: getPlayerList(roomCode), state: room.state, teamColors: room.teamColors, teamCaptains: room.teamCaptains });
+    socket.to(roomCode).emit('player-joined', { players: getPlayerList(roomCode), teamCaptains: room.teamCaptains });
     console.log(`${playerName} joined room ${roomCode}`);
   });
 
@@ -133,6 +148,70 @@ io.on('connection', (socket) => {
     socket.to(roomCode).emit('library-switched', data);
   });
 
+  // 切换队伍
+  socket.on('update-team', (data) => {
+    const roomCode = socket.data.roomCode;
+    const room = rooms.get(roomCode);
+    if (!room) return;
+    const player = room.players.get(socket.id);
+    if (!player) return;
+    const oldTeam = player.team;
+    const newTeam = typeof data.team === 'number' && data.team >= 0 && data.team <= 2 ? data.team : 0;
+    player.team = newTeam;
+    // 如果离开旧队伍且自己是该队队长，则清除旧队伍队长
+    if (!room.teamCaptains) room.teamCaptains = { 0: null, 1: null, 2: null };
+    if (room.teamCaptains[oldTeam] === socket.id) {
+      room.teamCaptains[oldTeam] = null;
+      // 从旧队伍中找下一个成员当队长
+      for (const [pid, p] of room.players) {
+        if (pid !== socket.id && p.team === oldTeam) {
+          room.teamCaptains[oldTeam] = pid;
+          break;
+        }
+      }
+    }
+    // 如果新队伍没有队长，该玩家自动成为队长
+    if (!room.teamCaptains[newTeam]) {
+      room.teamCaptains[newTeam] = socket.id;
+    }
+    io.to(roomCode).emit('team-updated', { playerId: socket.id, team: newTeam, players: getPlayerList(roomCode), teamCaptains: room.teamCaptains });
+  });
+
+  // 转让队长
+  socket.on('transfer-captain', (data, callback) => {
+    const roomCode = socket.data.roomCode;
+    const room = rooms.get(roomCode);
+    if (!room) { if (typeof callback === 'function') callback({ success: false, error: '房间不存在' }); return; }
+    if (!room.teamCaptains) room.teamCaptains = { 0: null, 1: null, 2: null };
+    const targetId = data.targetId;
+    const target = room.players.get(targetId);
+    if (!target) { if (typeof callback === 'function') callback({ success: false, error: '目标玩家不在房间' }); return; }
+    const team = target.team;
+    // 验证请求者是该队伍的当前队长
+    if (room.teamCaptains[team] !== socket.id) {
+      if (typeof callback === 'function') callback({ success: false, error: '你不是该队伍的队长' });
+      return;
+    }
+    // 验证目标在同一队伍
+    if (socket.id === targetId) {
+      if (typeof callback === 'function') callback({ success: false, error: '不能转让给自己' });
+      return;
+    }
+    room.teamCaptains[team] = targetId;
+    io.to(roomCode).emit('captain-changed', { team, newCaptainId: targetId, oldCaptainId: socket.id, teamCaptains: room.teamCaptains });
+    if (typeof callback === 'function') callback({ success: true, teamCaptains: room.teamCaptains });
+    console.log(`Team ${team} captain transferred from ${socket.id} to ${targetId}`);
+  });
+
+  // 更新队伍颜色
+  socket.on('update-team-colors', (data) => {
+    const roomCode = socket.data.roomCode;
+    const room = rooms.get(roomCode);
+    if (!room || !data.colors || !Array.isArray(data.colors)) return;
+    room.teamColors = data.colors.slice(0, 3);
+    io.to(roomCode).emit('team-colors-updated', { colors: room.teamColors });
+  });
+
   // 断线处理
   socket.on('disconnect', () => {
     handleLeaveRoom(socket);
@@ -143,7 +222,15 @@ io.on('connection', (socket) => {
 function getPlayerList(roomCode) {
   const room = rooms.get(roomCode);
   if (!room) return [];
-  return Array.from(room.players.values()).map(p => ({ name: p.name, isHost: p.isHost }));
+  return Array.from(room.players.entries()).map(([id, p]) => ({
+    id, name: p.name, isHost: p.isHost, team: p.team,
+    isCaptain: room.teamCaptains && room.teamCaptains[p.team] === id
+  }));
+}
+
+function getRoomTeamColors(roomCode) {
+  const room = rooms.get(roomCode);
+  return room ? room.teamColors : [...DEFAULT_TEAM_COLORS];
 }
 
 function broadcastToRoom(socket, event, data) {
@@ -161,6 +248,20 @@ function handleLeaveRoom(socket) {
   const wasHost = socket.id === room.hostId;
   room.players.delete(socket.id);
 
+  // 处理队长转移：如果离开者是某队队长，从该队剩余成员中找人接替
+  if (!room.teamCaptains) room.teamCaptains = { 0: null, 1: null, 2: null };
+  for (let t = 0; t <= 2; t++) {
+    if (room.teamCaptains[t] === socket.id) {
+      room.teamCaptains[t] = null;
+      for (const [pid, p] of room.players) {
+        if (p.team === t) {
+          room.teamCaptains[t] = pid;
+          break;
+        }
+      }
+    }
+  }
+
   if (room.players.size === 0) {
     rooms.delete(roomCode);
     console.log(`Room ${roomCode} deleted (empty)`);
@@ -172,7 +273,7 @@ function handleLeaveRoom(socket) {
       room.players.get(newHostId).isHost = true;
       io.to(roomCode).emit('host-changed', { newHostId });
     }
-    io.to(roomCode).emit('player-left', { players: getPlayerList(roomCode) });
+    io.to(roomCode).emit('player-left', { players: getPlayerList(roomCode), teamCaptains: room.teamCaptains });
   }
   socket.leave(roomCode);
   socket.data.roomCode = null;
