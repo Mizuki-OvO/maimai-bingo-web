@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rhythm Game Bingo</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- 侧边栏 -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <h2>Rhythm Game Bingo</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-page="game">游戏</a>
+      <a href="#" class="nav-item" data-page="music">曲库</a>
+      <a href="#" class="nav-item" data-page="multiplayer">联机</a>
+      <a href="#" class="nav-item" data-page="settings">设置</a>
+    </nav>
+  </aside>
+
+  <!-- 主内容区 -->
+  <div id="mainContent" class="main-content">
+    <main>
+      <section id="pageContent">
+        <div class="game-layout">
+          <div class="board-wrapper">
+            <button class="btn-random-fill" id="randomFillBtn">随机布局</button>
+            <button class="btn-clear-board" id="clearBoardBtn">重置棋盘</button>
+            <button class="btn-gen-map" id="genMapBtn">生成地图</button>
+            <div class="board">
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          </div>
+          </div>
+          <aside class="cell-settings-panel">
+            <div class="panel-header">
+              <h3>单元格设置</h3>
+              <button class="btn-add-format">添加格式</button>
+            </div>
+            <div id="formatList" class="format-list"></div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 格式编辑弹窗 -->
+  <div id="formatModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>格式编辑</h3>
+        <button class="modal-close-btn" id="closeFormatModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>颜色
+            <button class="btn-random-color" id="randomColorBtn" title="随机颜色">随机</button>
+          </label>
+          <input type="color" id="formatColor" value="#f9e4b7" />
+        </div>
+        <div class="form-group">
+          <label>定数</label>
+          <div class="level-range">
+            <select id="formatLevelFrom"></select>
+            <span class="level-separator">~</span>
+            <select id="formatLevelTo"></select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-save" id="saveFormat">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 单元格选择格式弹窗 -->
+  <div id="cellFormatModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>选择格式</h3>
+        <button class="modal-close-btn" id="closeCellFormatModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="cellInfo" class="cell-info-text"></p>
+        <div id="formatPickerList" class="format-picker-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastMsg" class="toast-msg"></div>
+
+  <!-- 保存预设弹窗 -->
+  <div id="presetModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>保存预设</h3>
+        <button class="modal-close-btn" id="closePresetModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>预设名称</label>
+          <input type="text" id="presetNameInput" placeholder="请输入预设名称" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-save" id="savePresetConfirm">保存</button>
+      </div>
+    </div>    
+  </div>
+
+  <!-- 单元格操作弹窗 -->
+  <div id="cellActionModal" class="modal-overlay">
+    <div class="modal-content modal-cell-action">
+      <div class="modal-header">
+        <h3>单元格操作</h3>
+        <button class="modal-close-btn" id="closeCellActionModal">&times;</button>
+      </div>
+      <div class="modal-body cell-action-body">
+        <p id="cellActionInfo" class="cell-action-info"></p>
+        <div class="cell-action-btns">
+          <button class="btn-lock-cell" id="lockCellBtn">锁定</button>
+          <button class="btn-reroll-cell" id="rerollCellBtn">Reroll</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+  <script src="music_data/maimai/maimai_music_data.js"></script>
+  <script src="music_data/arcaea/arc_music_data.js"></script>
+  <script src="multiplayer.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
+
