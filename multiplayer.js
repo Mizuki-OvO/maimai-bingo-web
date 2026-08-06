@@ -95,7 +95,9 @@ function connectSocket() {
         roomState.code = data.code;
         roomState.players = data.players;
         roomState.isHost = true;
-        roomState.myTeam = 0;
+        // 从玩家列表中找到自己的队伍
+        const me = data.players.find(p => p.id === socket.id);
+        roomState.myTeam = me ? me.team : 0;
         roomState.teamColors = data.teamColors || [...TEAM_DEFAULTS.colors];
         roomState.teamCaptains = data.teamCaptains || {};
         window.isMultiplayerHost = true;
@@ -330,14 +332,19 @@ function connectSocket() {
 }
 
 // ---------- 房间操作 ----------
-function createRoom(playerName) {
+async function createRoom(playerName) {
     if (!socket || !roomState.connected) {
         showToast('未连接到服务器', 'error');
         return;
     }
+
+    // 弹出队伍选择窗口
+    const selectedTeam = await showTeamSelectPopup('create');
+    roomState.myTeam = selectedTeam;
+
     const name = playerName || localStorage.getItem('mp_player_name') || '玩家' + Math.floor(Math.random() * 1000);
     localStorage.setItem('mp_player_name', name);
-    socket.emit('create-room', { playerName: name, team: roomState.myTeam });
+    socket.emit('create-room', { playerName: name, team: selectedTeam });
 }
 
 async function joinRoom(code, playerName) {
