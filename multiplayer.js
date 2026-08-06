@@ -5,18 +5,7 @@
 
 // ---------- 配置 ----------
 const MULTIPLAYER_CONFIG = {
-    serverUrl: (() => {
-        const saved = localStorage.getItem('mp_server_url');
-        // 保留 localStorage 覆盖用于本地开发测试
-        if (saved) return saved;
-        // 如果在本地开发 (localhost / 127.0.0.1)，使用本地服务器
-        const host = window.location.hostname;
-        if (host === 'localhost' || host === '127.0.0.1') {
-            return 'http://localhost:3000';
-        }
-        // 生产环境：Render 服务器地址
-        return 'https://maimai-bingo-web.onrender.com';
-    })(),
+    serverUrl: 'https://maimai-bingo-web.onrender.com',
     reconnectAttempts: 5,
     reconnectDelay: 2000,
 };
@@ -349,12 +338,6 @@ function updateConnectionUI() {
         statusEl.innerHTML = '<span class="mp-status-dot disconnected"></span> 未连接';
         statusEl.className = 'mp-connection-status disconnected';
     }
-
-    // 更新服务器地址显示
-    const addrEl = document.getElementById('mp-server-addr');
-    if (addrEl) {
-        addrEl.textContent = MULTIPLAYER_CONFIG.serverUrl;
-    }
 }
 
 function renderMainMenuUI() {
@@ -362,7 +345,6 @@ function renderMainMenuUI() {
     if (!container) return;
 
     const savedName = localStorage.getItem('mp_player_name') || '';
-    const savedServer = MULTIPLAYER_CONFIG.serverUrl;
 
     container.innerHTML = `
         <div class="mp-page">
@@ -372,15 +354,6 @@ function renderMainMenuUI() {
                     <span class="mp-status-dot ${roomState.connected ? 'connected' : 'disconnected'}"></span>
                     ${roomState.connected ? '已连接' : '未连接'}
                 </div>
-            </div>
-
-            <div class="mp-server-config">
-                <label class="mp-label">服务器地址</label>
-                <div class="mp-input-row">
-                    <input type="text" id="mp-server-input" class="mp-input" value="${escapeHtml(savedServer)}" placeholder="http://localhost:3000">
-                    <button class="mp-btn mp-btn-sm" id="mp-server-reconnect">重连</button>
-                </div>
-                <p id="mp-server-addr" class="mp-server-hint">${escapeHtml(savedServer)}</p>
             </div>
 
             <div class="mp-section">
@@ -501,25 +474,6 @@ function escapeHtml(str) {
 
 // ---------- 事件绑定 ----------
 function bindMainMenuEvents() {
-    // 重连按钮
-    document.getElementById('mp-server-reconnect')?.addEventListener('click', () => {
-        const newUrl = document.getElementById('mp-server-input')?.value?.trim();
-        if (newUrl) {
-            MULTIPLAYER_CONFIG.serverUrl = newUrl;
-            localStorage.setItem('mp_server_url', newUrl);
-        }
-        showToast('正在重连...', 'info');
-        connectSocket();
-        updateConnectionUI();
-    });
-
-    // 回车重连
-    document.getElementById('mp-server-input')?.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            document.getElementById('mp-server-reconnect')?.click();
-        }
-    });
-
     // 创建房间
     document.getElementById('mp-create-btn')?.addEventListener('click', () => {
         const name = document.getElementById('mp-create-name')?.value?.trim();
