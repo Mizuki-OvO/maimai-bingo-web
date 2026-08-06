@@ -5,6 +5,11 @@ const crypto = require('crypto');
 
 const app = express();
 const server = http.createServer(app);
+
+// 健康检查 + 版本端点
+app.get('/health', (_req, res) => res.json({ status: 'ok', version: '2.0.0', commit: process.env.RENDER_GIT_COMMIT?.slice(0, 7) || 'dev' }));
+app.get('/', (_req, res) => res.json({ name: 'maimai-bingo-server', version: '2.0.0' }));
+
 const io = new Server(server, {
   cors: { origin: '*', methods: ['GET', 'POST'] }
 });
